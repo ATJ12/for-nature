@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSort — AI-Powered Waste Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        button.tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        button.tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        button.submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button.submit:hover {
+            transform: translateY(-2px);
+        }
+        
+        button.submit:active {
+            transform: translateY(0);
+        }
+        
+        button.submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result-category {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+        
+        .result-reason {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .result-fact {
+            background: white;
+            padding: 12px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .result-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #856404;
+            border-radius: 4px;
+        }
+        
+        .result-alert {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #721c24;
+            border-radius: 4px;
+        }
+        
+        .result-disclaimer {
+            background: white;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #999;
+            margin-top: 15px;
+        }
+        
+        .co2-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .image-preview.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 EcoSort</h1>
+        <p class="subtitle">AI-Powered Waste Classification</p>
+        
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="text">Text</button>
+            <button class="tab-btn" data-tab="image">Image</button>
+        </div>
+        
+        <!-- Text Classification -->
+        <div id="text" class="tab-content active">
+            <div class="form-group">
+                <label for="item">What item do you want to classify?</label>
+                <input type="text" id="item" placeholder="e.g., plastic bottle, cardboard box, battery...">
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="isDirty">
+                <label for="isDirty" style="margin-bottom: 0;">Item is dirty or food-soiled</label>
+            </div>
+            
+            <button class="submit" onclick="classifyText()">Classify</button>
+        </div>
+        
+        <!-- Image Classification -->
+        <div id="image" class="tab-content">
+            <div class="form-group">
+                <label for="imageFile">Upload an image of the waste item</label>
+                <input type="file" id="imageFile" accept="image/*">
+                <img id="imagePreview" class="image-preview">
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="isImageDirty">
+                <label for="isImageDirty" style="margin-bottom: 0;">Item is dirty or food-soiled</label>
+            </div>
+            
+            <button class="submit" onclick="classifyImage()">Classify Image</button>
+        </div>
+        
+        <!-- Loading and Results -->
+        <div class="loading" id="loading">
+            <div>⏳ Classifying...</div>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(tab).classList.add('active');
+                hideError();
+                hideResult();
+            });
+        });
+        
+        // Image preview
+        document.getElementById('imageFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('imagePreview').src = event.target.result;
+                    document.getElementById('imagePreview').classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+        
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+        
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+        
+        function showResult(data) {
+            const resultEl = document.getElementById('result');
+            const categoryColors = {
+                'recyclable': '#4CAF50',
+                'compostable': '#8BC34A',
+                'hazardous': '#f44336',
+                'landfill': '#9E9E9E',
+                'reusable': '#2196F3'
+            };
+            
+            let html = `<div class="result-category" style="color: ${categoryColors[data.category] || '#667eea'}">${data.category}</div>`;
+            
+            if (data.item_detected) {
+                html += `<p style="color: #999; font-size: 13px; margin-bottom: 10px;">Item detected: <strong>${data.item_detected}</strong></p>`;
+            }
+            
+            html += `<p class="result-reason">${data.reason}</p>`;
+            
+            if (data.eco_fact) {
+                html += `<div class="result-fact">💡 ${data.eco_fact}</div>`;
+            }
+            
+            if (data.contamination_warning) {
+                html += `<div class="result-warning">⚠️ ${data.contamination_warning}</div>`;
+            }
+            
+            if (data.wishcycling_alert) {
+                html += `<div class="result-alert">🚫 ${data.wishcycling_alert}</div>`;
+            }
+            
+            if (data.co2_saved_kg) {
+                html += `<div class="co2-badge">🌱 ~${data.co2_saved_kg} kg CO₂ saved by correct sorting</div>`;
+            }
+            
+            if (data.disclaimer) {
+                html += `<div class="result-disclaimer">${data.disclaimer}</div>`;
+            }
+            
+            resultEl.innerHTML = html;
+            resultEl.classList.add('show');
+        }
+        
+        function hideResult() {
+            document.getElementById('result').classList.remove('show');
+        }
+        
+        async function classifyText() {
+            const item = document.getElementById('item').value.trim();
+            const isDirty = document.getElementById('isDirty').checked;
+            
+            if (!item) {
+                showError('Please enter an item to classify');
+                return;
+            }
+            
+            hideError();
+            showLoading();
+            hideResult();
+            
+            try {
+                const response = await fetch('/api/classify-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item, isDirty })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Classification failed');
+                }
+                
+                const data = await response.json();
+                showResult(data);
+            } catch (err) {
+                showError(`Error: ${err.message}`);
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function classifyImage() {
+            const file = document.getElementById('imageFile').files[0];
+            const isDirty = document.getElementById('isImageDirty').checked;
+            
+            if (!file) {
+                showError('Please select an image');
+                return;
+            }
+            
+            hideError();
+            showLoading();
+            hideResult();
+            
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                try {
+                    const base64 = event.target.result.split(',')[1];
+                    const mime = file.type;
+                    
+                    const response = await fetch('/api/classify-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ base64, mime, isDirty })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Image classification failed');
+                    }
+                    
+                    const data = await response.json();
+                    showResult(data);
+                } catch (err) {
+                    showError(`Error: ${err.message}`);
+                } finally {
+                    hideLoading();
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('item').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') classifyText();
+        });
+    </script>
+</body>
+</html>
